@@ -1,0 +1,7 @@
+go 1.22.0
+
+use(
+    ./03-funciones-cl-test/
+    ./04-Metodos-interfaces/ej1/
+    ./07-Package_cierre/code/desafio-go-bases/
+)

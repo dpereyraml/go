@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"workbench.view.alwaysShowHeaderActions": false,
+		"references.preferredLocation": "peek"
+	}
+}
