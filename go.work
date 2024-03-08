@@ -1,0 +1,9 @@
+go 1.22.0
+
+use (
+	./01-go-bases/03-funciones-cl-test/
+	./01-go-bases/04-Metodos-interfaces/ej1/
+	./01-go-bases/07-Package_cierre/code/desafio-go-bases/
+	./02-go-web/01-primer-api/
+	./02-go-web/02-context-get/
+)
