@@ -47,12 +47,13 @@ func LoadProductsFromFile() []Product {
 
 // add product to JSON file
 func SaveProductToFile(product Product) []Product {
-	/* products := LoadProductsFromFile()
+	products := LoadProductsFromFile()
 	if products == nil {
 		products = []Product{}
-	} */
-	var products []Product
+	}
+
 	products = append(products, product)
+
 	data, err := json.Marshal(products)
 	if err != nil {
 		fmt.Println(err)

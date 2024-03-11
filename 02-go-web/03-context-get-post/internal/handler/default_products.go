@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -207,6 +208,13 @@ func (h *DefaultProduct) CreateProduct() http.HandlerFunc {
 			web.ResponseJSON(w, http.StatusUnauthorized, map[string]any{"error": "unauthorized"})
 			return
 		}
+		// Obtainer el ID del producto de la URL
+		productId := chi.URLParam(r, "id")
+		if productId != "" {
+			web.ResponseJSON(w, http.StatusUnauthorized, map[string]any{"error": "field no required"})
+			return
+		}
+
 		// read into bytes
 		bytes, err := io.ReadAll(r.Body)
 		if err != nil {
@@ -217,14 +225,42 @@ func (h *DefaultProduct) CreateProduct() http.HandlerFunc {
 		// - validate request body parse into map[string]any
 		bodyMap := make(map[string]any)
 		if err := json.Unmarshal(bytes, &bodyMap); err != nil {
-			web.ResponseJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid request body unm"})
+			web.ResponseJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid request body Unmarshal"})
 			return
 		}
 
-		// - validate request body
-		// ... se debe hacer para cada campo del body ...
+		// - validate request body fields
 		if _, ok := bodyMap["name"]; !ok {
 			web.ResponseJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid request body name is required"})
+			return
+		}
+		if _, ok := bodyMap["quantity"]; !ok {
+			web.ResponseJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid request body quantity is required"})
+			return
+		}
+		if _, ok := bodyMap["code_value"]; !ok {
+			web.ResponseJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid request body code_value is required"})
+			return
+		}
+		if _, ok := bodyMap["expiration"]; !ok {
+			web.ResponseJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid request body expiration is required"})
+			return
+		}
+		expiration, _ := bodyMap["expiration"].(string)
+		/* if !ok {
+			web.ResponseJSON(w, http.StatusBadRequest, map[string]any{"error": "expiration don't have the correct format, is not a string"})
+			return
+		} */
+
+		_, errExt := time.Parse("02/01/2006", expiration) // REVISAR
+		if errExt != nil {
+			web.ResponseJSON(w, http.StatusBadRequest, map[string]any{"error": "expiration don't have the correct format"})
+
+			return
+		}
+
+		if _, ok := bodyMap["price"]; !ok {
+			web.ResponseJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid request body price is required"})
 			return
 		}
 
@@ -254,9 +290,15 @@ func (h *DefaultProduct) CreateProduct() http.HandlerFunc {
 
 		// process
 		// - get the lastID
+		// - validate code_value|unique
+		code_val := bodyMap["code_value"]
 		var idInt int
 		productsData := repository.LoadProductsFromFile()
 		for _, p := range productsData {
+			if p.CodeValue == code_val {
+				web.ResponseJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid request body code_value must be unique"})
+				return
+			}
 			if p.ID > idInt {
 				idInt = p.ID
 			}
