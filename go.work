@@ -7,4 +7,6 @@ use (
 	./02-go-web/01-primer-api/
 	./02-go-web/02-context-get/
 	./02-go-web/03-context-get-post/
+	./02-go-web/04-package-oriented-design
+	./02-go-web/06-testing
 )
