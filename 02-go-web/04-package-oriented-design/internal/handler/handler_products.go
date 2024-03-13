@@ -7,11 +7,12 @@ import (
 	"io"
 	"net/http"
 	"package-oriented-design/internal"
-	"package-oriented-design/internal/repository"
 	"package-oriented-design/platform/tools"
+	"strconv"
 	"time"
 
 	"github.com/bootcamp-go/web/response"
+	"github.com/go-chi/chi/v5"
 )
 
 // DefaultProduct is a struct that contains the handlers for the products
@@ -56,76 +57,28 @@ func NewHandlerProducts(sv internal.ProductsService) *DefaultProduct {
 }
 
 /*
-func NewHandlerProducts(product map[int]internal.Product, lastID int) *DefaultProduct {
-	// default values
-	defaultProduct := make(map[int]internal.Product)
-	defaultLastID := 0
+	func NewHandlerProducts(product map[int]internal.Product, lastID int) *DefaultProduct {
+		// default values
+		defaultProduct := make(map[int]internal.Product)
+		defaultLastID := 0
 
-	if product != nil {
-		defaultProduct = product
-	}
-	if lastID != 0 {
-		defaultLastID = lastID
-	}
+		if product != nil {
+			defaultProduct = product
+		}
+		if lastID != 0 {
+			defaultLastID = lastID
+		}
 
-	return &DefaultProduct{
-		product: defaultProduct,
-		lastID:  defaultLastID,
+		return &DefaultProduct{
+			product: defaultProduct,
+			lastID:  defaultLastID,
+		}
 	}
-}
 */
-
-// Methods GET
-/* solucionar
 func (h *DefaultProduct) Ping() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// w.Write([]byte("Pong!"))
 		response.JSON(w, http.StatusOK, map[string]any{"response": "Pong!"})
-	}
-}
-
-func (h *DefaultProduct) Products() http.HandlerFunc {
-	productsData := repository.LoadProductsFromFile()
-	// falta validaciones de errores
-	return func(w http.ResponseWriter, r *http.Request) {
-		response.JSON(w, http.StatusOK, productsData)
-	}
-}
-
-func (h *DefaultProduct) FindPricesGreaterThan() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		// Obtainer el ID del producto de la URL
-		productId := chi.URLParam(r, "search")
-
-		// Convert the ID to an integer
-		idInt, err := strconv.Atoi(productId)
-		if err != nil {
-			fmt.Println("Error al convertir ID a entero:", err)
-			http.Error(w, "ID inválido", http.StatusBadRequest)
-			return
-		}
-
-		// Load the products from the file
-		productsData := repository.LoadProductsFromFile()
-
-		// Search the product by ID
-		var product repository.Product
-		for _, p := range productsData {
-			if p.ID == idInt {
-				product = p
-				break
-			}
-		}
-
-		// Valid if the product was found
-		if product.ID == 0 {
-			// Product not found
-			response.JSON(w, http.StatusNotFound, map[string]interface{}{"error": "Producto no encontrado"})
-			return
-		}
-
-		// Return the product as JSON
-		response.JSON(w, http.StatusOK, product)
 	}
 }
 
@@ -143,31 +96,34 @@ func (h *DefaultProduct) ProductByID() http.HandlerFunc {
 		}
 
 		// Load the products from the file
-		productsData := repository.LoadProductsFromFile()
-
-		// Search the product by ID
-		var product repository.Product
-		for _, p := range productsData {
-			if p.ID == idInt {
-				product = p
-				break
-			}
+		productsData, err := h.sv.GetProductsById(idInt)
+		if err != nil {
+			fmt.Println("Error al obtener el producto:", err)
+			http.Error(w, "Error al obtener el producto", http.StatusInternalServerError)
+			return
 		}
 
 		// Valid if the product was found
-		if product.ID == 0 {
+		if productsData.ID == 0 {
 			// Product not found
 			response.JSON(w, http.StatusNotFound, map[string]interface{}{"error": "Producto no encontrado"})
 			return
 		}
 
 		// Return the product as JSON
-		response.JSON(w, http.StatusOK, product)
+		response.JSON(w, http.StatusOK, productsData)
 	}
 }
 
+func (h *DefaultProduct) GetProducts() http.HandlerFunc {
 
-func (h *DefaultProduct) GetBySearchQuery() http.HandlerFunc {
+	// falta validaciones de errores
+	return func(w http.ResponseWriter, r *http.Request) {
+		response.JSON(w, http.StatusOK, h.sv.GetProducts())
+	}
+}
+
+func (h *DefaultProduct) GetProductsBySearchQuery() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// request
 		// - get the priceGt from the query params
@@ -181,29 +137,22 @@ func (h *DefaultProduct) GetBySearchQuery() http.HandlerFunc {
 			return
 		}
 		// Load the products from the file
-		productsData := repository.LoadProductsFromFile()
-
-		// Search the product by price higher than priceGt
-		var products []repository.Product
-
-		for _, p := range productsData {
-			if p.Price > priceGt {
-				products = append(products, p)
-			}
+		productsData, err := h.sv.GetBySearchQuery(priceGt)
+		if err != nil {
+			response.JSON(w, http.StatusInternalServerError, map[string]interface{}{"error": "Error al obtener el producto"})
+			return
 		}
 
-		// Valid if the product was found
-		if products == nil {
-			// Product not found
+		if productsData == nil {
 			response.JSON(w, http.StatusNotFound, map[string]interface{}{"error": "Producto/s no encontrado/s"})
 			return
 		}
 
 		// Return the product as JSON
-		response.JSON(w, http.StatusOK, products)
+		response.JSON(w, http.StatusOK, productsData)
 	}
 }
-*/
+
 // Methods POST
 func (h *DefaultProduct) CreateProduct() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -224,26 +173,6 @@ func (h *DefaultProduct) CreateProduct() http.HandlerFunc {
 			response.JSON(w, http.StatusBadRequest, map[string]any{"error": "invalid request body Unmarshal"})
 			return
 		}
-
-		// - validate request body fields
-		/*
-			if _, ok := bodyMap["name"]; !ok {
-				response.JSON(w, http.StatusBadRequest, map[string]any{"error": "invalid request body name is required"})
-				return
-			}
-			if _, ok := bodyMap["quantity"]; !ok {
-				response.JSON(w, http.StatusBadRequest, map[string]any{"error": "invalid request body quantity is required"})
-				return
-			}
-			if _, ok := bodyMap["code_value"]; !ok {
-				response.JSON(w, http.StatusBadRequest, map[string]any{"error": "invalid request body code_value is required"})
-				return
-			}
-			if _, ok := bodyMap["expiration"]; !ok {
-				response.JSON(w, http.StatusBadRequest, map[string]any{"error": "invalid request body expiration is required"})
-				return
-			}
-		*/
 
 		// validate requerid fields
 		if err := tools.CheckFieldExistance(bodyMap, "name", "quantity", "code_value", "expiration"); err != nil {
@@ -364,7 +293,7 @@ func (h *DefaultProduct) CreateProduct() http.HandlerFunc {
 		}
 
 		// repository.SaveProductToFile(repository.Product(product))
-		repository.SaveProductToFile(repository.ProductRep{})
+		h.sv.CreateProduct(&internal.Product{})
 
 		response.JSON(w, http.StatusCreated, map[string]interface{}{
 			"message": "task created",

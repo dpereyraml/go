@@ -21,25 +21,15 @@ func main() {
 	hd := handler.NewHandlerProducts(sv)
 	// - router
 	router := chi.NewRouter()
+	router.Get("/ping", hd.Ping())
 	router.Route("/products", func(r chi.Router) {
 		// POST /tasks
 		r.Post("/", hd.CreateProduct())
+		r.Get("/", hd.GetProducts())
+		r.Get("/{id}", hd.ProductByID())
+		r.Get("/search", hd.GetProductsBySearchQuery())
+
 	})
-	/*
-		// handler
-		h := handler.NewHandlerProducts(nil, 0)
-		//router
-		r := chi.NewRouter()
-		r.Get("/ping", h.Ping())
-
-		r.Get("/products", h.Products())
-
-		r.Get("/products/{id}", h.ProductByID())
-
-		r.Get("/products/search", h.GetBySearchQuery())
-
-		r.Post("/products", h.CreateProduct())
-	*/
 
 	// server
 	if err := http.ListenAndServe("localhost:8080", router); err != nil {

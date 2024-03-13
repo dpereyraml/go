@@ -1,9 +1,7 @@
 package repository
 
 import (
-	"encoding/json"
 	"fmt"
-	"os"
 	"package-oriented-design/internal"
 )
 
@@ -29,6 +27,38 @@ func (p *ProductRep) CreateProduct(product *internal.Product) (err error) {
 	(*p).db[(*product).ID] = *product
 	return
 }
+
+func (p *ProductRep) GetProductsById(id int) (product *internal.Product, err error) {
+
+	productRetrieved, ok := p.db[id]
+	if !ok {
+		return nil, fmt.Errorf("product not found")
+
+	} else {
+		return &productRetrieved, nil
+
+	}
+}
+
+func (p *ProductRep) GetProducts() []internal.Product {
+	products := make([]internal.Product, 0, len(p.db))
+	for _, product := range p.db {
+		products = append(products, product)
+	}
+	return products
+}
+
+func (p *ProductRep) GetBySearchQuery(priceGT float64) ([]internal.Product, error) {
+	products := make([]internal.Product, 0, len(p.db))
+	for _, product := range p.db {
+		if product.Price > priceGT {
+			products = append(products, product)
+		}
+	}
+	return products, nil
+}
+
+/* REVISAR * /
 
 // add product to JSON file
 func SaveProductToFile(product ProductRep) []ProductRep {
@@ -66,8 +96,6 @@ func LoadProductsFromFile() []ProductRep {
 
 	return products
 }
-
-/* REVISAR * /
 
 func (p *ProductRep) Ping() any {
 	return p.

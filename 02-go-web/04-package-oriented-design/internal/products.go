@@ -26,30 +26,16 @@ var (
 
 // ProductsRepository is the interface for the products repository
 type ProductsRepository interface {
-	// Point to check the connection
-	/* Ping() any
-
-	// Points to get information from the database
-	LoadProducts() []Product
-	Products() []Product
-	ProductByID(int) (Product, error)
-	GetBySearchQuery(string) ([]Product, error)
-	*/
-	// Entry point for the product creation
 	CreateProduct(product *Product) (err error)
+	GetProductsById(id int) (*Product, error)
+	GetProducts() []Product
+	GetBySearchQuery(priceGT float64) ([]Product, error)
 }
 
 // ProductsService is the interface for the products service
 type ProductsService interface {
-	/* // Point to check the connection
-	Ping() any
-
-	// Points to get information from the database
-	LoadProducts() []Product
-	Products() []Product
-	ProductByID(int) (Product, error)
-	GetBySearchQuery(string) ([]Product, error)
-	*/
-	// Entry point for the product creation
 	CreateProduct(product *Product) (err error)
+	GetProductsById(id int) (Product, error)
+	GetProducts() []Product
+	GetBySearchQuery(priceGT float64) ([]Product, error)
 }

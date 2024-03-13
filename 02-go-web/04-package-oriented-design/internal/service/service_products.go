@@ -37,3 +37,19 @@ type Product struct {
 func (p *Product) CreateProduct(product *internal.Product) error {
 	return p.rp.CreateProduct(product)
 }
+
+func (p *Product) GetProductsById(id int) (internal.Product, error) {
+	productRetrieved, err := p.rp.GetProductsById(id)
+	if err != nil {
+		return internal.Product{}, err
+	}
+	return *productRetrieved, nil
+}
+
+func (p *Product) GetProducts() []internal.Product {
+	return p.rp.GetProducts()
+}
+
+func (p *Product) GetBySearchQuery(priceGT float64) ([]internal.Product, error) {
+	return p.rp.GetBySearchQuery(priceGT)
+}
