@@ -78,12 +78,12 @@ func (h *DefaultProduct) Ping() http.HandlerFunc {
 }
 
 func (h *DefaultProduct) Products() http.HandlerFunc {
-	productsData := repository.LoadProductsFromFile()
+	// productsData := repository.LoadProductsFromFile()
 	// productsJSON := repository.ToJSON(productsData)
 	// quitar el ToJson?
 	// falta validaciones de errores
 	return func(w http.ResponseWriter, r *http.Request) {
-		web.ResponseJSON(w, http.StatusOK, productsData)
+		web.ResponseJSON(w, http.StatusOK, repository.LoadProductsFromFile())
 	}
 }
 
@@ -313,8 +313,6 @@ func (h *DefaultProduct) CreateProduct() http.HandlerFunc {
 			h.lastID++
 		}
 
-		// - increment the lastID
-
 		// - serialize the request body into a Product struct
 		product := internal.Product{
 			ID:          h.lastID,
@@ -332,6 +330,7 @@ func (h *DefaultProduct) CreateProduct() http.HandlerFunc {
 			return
 		}
 
+		repository.SaveProductToFile(repository.Product(product))
 		// store the prduct
 		h.product[product.ID] = product
 
@@ -347,8 +346,6 @@ func (h *DefaultProduct) CreateProduct() http.HandlerFunc {
 			Expiration:  product.Expiration,
 			Price:       product.Price,
 		}
-
-		repository.SaveProductToFile(repository.Product(product))
 
 		web.ResponseJSON(w, http.StatusCreated, map[string]interface{}{
 			"message": "task created",
